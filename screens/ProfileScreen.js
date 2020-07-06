@@ -9,6 +9,8 @@ export default class ProfileScreen extends React.Component {
 
     unsubscribe = null;
 
+    
+
     componentDidMount() {
         const user = this.props.uid || Fire.shared.uid;
 

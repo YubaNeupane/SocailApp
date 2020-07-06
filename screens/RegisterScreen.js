@@ -5,6 +5,8 @@ import * as firebase from "firebase";
 import UserPermissions from "../utilities/UserPermissions";
 import * as ImagePicker from 'expo-image-picker'
 import Fire from '../Fire'
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';    
+
 
 
 export default class RegisterScreen extends React.Component {
@@ -17,17 +19,32 @@ export default class RegisterScreen extends React.Component {
             name: "", 
             email: "", 
             password: "",
-            avatar:null
+            avatar:null,
+            
         },
          
-        errorMessage: null 
+        errorMessage: null,
+        loading:false
     };
 
     handleSignUp = () => {
         Keyboard.dismiss()
         Fire.shared.createUser(this.state.user);
-       
     };
+
+    compressImage = async (uri, format = SaveFormat.JPEG) => { // SaveFormat.PNG
+        const result = await manipulateAsync(
+            uri,
+            [{ resize: { width: 200 } }],
+            { compress: 0.1, format }
+        );
+            
+        this.setState({user:{...this.setState.user, avatar:result.uri}})
+        // console.log({ name: `${Date.now()}.${format}`, type: `image/${format}`, ...result })
+       // return  { name: `${Date.now()}.${format}`, type: `image/${format}`, ...result };
+        // return: { name, type, width, height, uri }
+    };
+
 
     handlePickAvatar= async ()=>{
         UserPermissions.getCamaraPermission()
@@ -35,9 +52,10 @@ export default class RegisterScreen extends React.Component {
             mediaTypes:ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect:[4,3],
+            quality:0
         })
         if(!result.cancelled){
-            this.setState({user:{...this.setState.user, avatar:result.uri}})
+            this.compressImage(result.uri)
         }
 
     }

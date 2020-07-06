@@ -6,6 +6,8 @@ import { Ionicons } from "@expo/vector-icons";
 import Fire from "../Fire";
 import * as ImagePicker from "expo-image-picker";
 import UserPermissions from "../utilities/UserPermissions";
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';    
+
 
 
 const firebase = require("firebase");
@@ -42,6 +44,19 @@ export default class PostScreen extends React.Component {
         this.unsubscribe();
     }
 
+    compressImage = async (uri, format = SaveFormat.JPEG) => { // SaveFormat.PNG
+        const result = await manipulateAsync(
+            uri,
+            [{ resize: { width: 500 } }],
+            { compress: 0.1, format }
+        );
+    
+        this.setState({ image: result.uri });
+       // console.log({ name: `${Date.now()}.${format}`, type: `image/${format}`, ...result })
+       // return  { name: `${Date.now()}.${format}`, type: `image/${format}`, ...result };
+        // return: { name, type, width, height, uri }
+    };
+
 
 
     handlePost = () => {
@@ -64,11 +79,18 @@ export default class PostScreen extends React.Component {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
-            aspect: [4, 3]
-        });
+            aspect:[4,3],
+            quality: 8,
+            exif: false
+        })
+
+
 
         if (!result.cancelled) {
-            this.setState({ image: result.uri });
+           
+            this.compressImage(result.uri)
+           // console.log(result)
+            
         }
     };
 

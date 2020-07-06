@@ -30,6 +30,8 @@ class Fire {
         });
     };
 
+
+
     uploadPhotoAsync = (uri, filename) => {
         return new Promise(async (res, rej) => {
             const response = await fetch(uri);
@@ -54,8 +56,9 @@ class Fire {
         });
     };
 
-    createUser = async user => {
+    createUser = async (user,loading) => {
         let remoteUri = null;
+        loading = true;
 
         try {
             await firebase.auth().createUserWithEmailAndPassword(user.email, user.password);

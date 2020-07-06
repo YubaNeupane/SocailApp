@@ -1,6 +1,8 @@
 import React from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, StatusBar, LayoutAnimation } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, StatusBar, LayoutAnimation,ActivityIndicator, Keyboard } from "react-native";
 import firebase from "firebase";
+
+
 
 export default class LoginScreen extends React.Component {
     static navigationOptions = {
@@ -10,16 +12,22 @@ export default class LoginScreen extends React.Component {
     state = {
         email: "",
         password: "",
-        errorMessage: null
+        errorMessage: null,
+        loading:false
     };
 
     handleLogin = () => {
+        Keyboard.dismiss()
         const { email, password } = this.state;
+        this.setState({loading:true})
 
         firebase
             .auth()
             .signInWithEmailAndPassword(email, password)
-            .catch(error => this.setState({ errorMessage: error.message }));
+            .catch(error => {
+                this.setState({ errorMessage: error.message })
+                this.setState({loading:false})
+            });
     };
 
     render() {
@@ -69,10 +77,13 @@ export default class LoginScreen extends React.Component {
                     </View>
                 </View>
 
-                <TouchableOpacity style={styles.button} onPress={this.handleLogin}>
-                    <Text style={{ color: "#FFF", fontWeight: "500" }}>Sign in</Text>
-                </TouchableOpacity>
+                
 
+                {this.state.loading?  <ActivityIndicator size="large" color="#0000ff" />: 
+                    <TouchableOpacity style={styles.button} onPress={this.handleLogin}>
+                    <Text style={{ color: "#FFF", fontWeight: "500" }}>Sign in</Text>
+                    </TouchableOpacity>
+                }
                 <TouchableOpacity
                     style={{ alignSelf: "center", marginTop: 32 }}
                     onPress={() => this.props.navigation.navigate("Register")}
@@ -81,6 +92,8 @@ export default class LoginScreen extends React.Component {
                         New to SocialApp? <Text style={{ fontWeight: "500", color: "#E9446A" }}>Sign up</Text>
                     </Text>
                 </TouchableOpacity>
+               
+
             </View>
         );
     }

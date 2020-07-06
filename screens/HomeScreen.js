@@ -51,30 +51,36 @@ require("firebase/firestore");
 export default class HomeScreen extends React.Component {
     state={
         posts:[],
-        users:[]
+        //users:[]
     }
 
     
-    getUser = async() =>{
-        const observer = firebase.firestore().collection('users')
-        .onSnapshot(querySnapshot => {
-            querySnapshot.docChanges().forEach(change => {
-                if (change.type === 'added') {
-                    console.log(change.doc.data())
-                }
-            });
-        });
-    }
 
     getData = async() =>{
         const observer = firebase.firestore().collection('posts')
         .onSnapshot(querySnapshot => {
             querySnapshot.docChanges().forEach(change => {
+                let temp = [...this.state.posts]
+
             if (change.type === 'added') {
-                const temp = [...this.state.posts]
-                const updatedPosts = [...temp,change.doc.data()]
-                const updatedSortedPosts = updatedPosts.sort((a, b) => b.timestamp - a.timestamp)
-                this.setState({posts:updatedSortedPosts})
+                const cityRef = firebase.firestore().collection('users').doc(change.doc.data().uid);
+                cityRef.get().then(res => {
+                    let temp2 = [...this.state.posts]
+                    const obj = {
+                        user: res.data(),
+                        timestamp:change.doc.data().timestamp,
+                        post:change.doc.data()
+                    }
+                    const updatedUser = [...temp2,obj]
+                    const updatedUserSorted = updatedUser.sort((a, b) => b.timestamp - a.timestamp)
+
+                    this.setState({posts:updatedUserSorted})
+                    //console.log(this.state.users[0].data)
+                });
+            //     const updatedPosts = [...temp,change.doc.data()]
+            //    // console.log(updatedPosts)
+            //     const updatedSortedPosts = updatedPosts.sort((a, b) => b.timestamp - a.timestamp)
+            //     this.setState({posts:updatedSortedPosts})
             }
             if (change.type === 'modified') {
                 // console.log('Modified city: ', change.doc.data());
@@ -91,37 +97,42 @@ export default class HomeScreen extends React.Component {
 
     componentDidMount(){
         this.getData()
-        this.getUser()
     }
 
 
-    renderPost = post =>{
-      //  console.log(post.image)
-        return(
-            <View style={styles.feedItem}>
-                <Image source={post.avatar} style={styles.avatar}/>
-                <View style={{flex:1}}>
-                    <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
-                        <View>
-                            <Text style={styles.name}>{post.name}</Text>
-                            <Text style={styles.timestamp}>{moment(post.timestamp).fromNow()}</Text>
+    renderPost = (data) =>{
+        
+
+        post = data.post
+        user = data.user
+ 
+       
+            return(
+                <View style={styles.feedItem}>
+                    <Image source={{uri:user.avatar}} style={styles.avatar}/>
+                    <View style={{flex:1}}>
+                        <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
+                            <View>
+                                <Text style={styles.name}>{user.name}</Text>
+                                <Text style={styles.timestamp}>{moment(post.timestamp).fromNow()}</Text>
+                            </View>
+                            <Ionicons name='ios-more' size={24} color='#73788B'style={{marginRight:15}}/>
+
                         </View>
-                        <Ionicons name='ios-more' size={24} color='#73788B'style={{marginRight:15}}/>
+                        <Text style={styles.post}>{post.text}</Text>
+                        {post.image ? <Image source={ {uri: post.image} } style={styles.postImage} resizeMode='cover'/> :null}
+                        
 
-                    </View>
-                    <Text style={styles.post}>{post.text}</Text>
-                    {post.image ? <Image source={ {uri: post.image} } style={styles.postImage} resizeMode='cover'/> :null}
-                    
+                        <View style={{flexDirection:'row'}}>
+                            <Ionicons name='ios-heart-empty' size={24} color='#73788B' style = {{marginRight:16}}/>
+                            <Ionicons name='ios-chatboxes' size={24} color='#73788B'/>
+                        </View>
 
-                    <View style={{flexDirection:'row'}}>
-                        <Ionicons name='ios-heart-empty' size={24} color='#73788B' style = {{marginRight:16}}/>
-                        <Ionicons name='ios-chatboxes' size={24} color='#73788B'/>
                     </View>
 
                 </View>
-
-            </View>
-        )
+            )
+     
     }
     
 
@@ -139,7 +150,7 @@ export default class HomeScreen extends React.Component {
                     style={styles.feed} 
                     data={this.state.posts} 
                     renderItem={({item})=>this.renderPost(item)} 
-                    keyExtractor={item=>item.id}
+                    keyExtractor={item=>item.post.id}
                     showsVerticalScrollIndicator={false}
                 />
 
@@ -205,7 +216,7 @@ const styles = StyleSheet.create({
     },
     postImage:{
         width:undefined,
-        height:150,
+        height:300,
         borderRadius:5,
         marginVertical:16,
     }
